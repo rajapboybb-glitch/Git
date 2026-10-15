@@ -210,14 +210,15 @@ async def download_media(call: types.CallbackQuery):
     file_id = f"file_{call.from_user.id}"
     out_tmpl = f"{file_id}.%(ext)s"
     
-    # YouTube va boshqa tarmoqlar uchun to'g'rilangan parametrlar
+    # YouTube va boshqa tarmoqlar uchun to'g'rilangan parametrlar (Shorts va videolarni ochish uchun)
     ydl_opts = {
         'outtmpl': out_tmpl,
         'quiet': True,
         'no_warnings': True,
         'geo_bypass': True,
         'nocheckcertificate': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     }
 
     if is_audio:
@@ -286,7 +287,7 @@ async def keep_alive():
                         logging.info(f"Ping yuborildi. Status: {resp.status}")
             except Exception as e:
                 logging.error(f"Pingda xatolik: {e}")
-        await asyncio.sleep(600)  # Har 10 daqiqada bir marta
+        await asyncio.sleep(600)
 
 # --- ISHGA TUSHIRISH ---
 async def main():
