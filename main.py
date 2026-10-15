@@ -16,7 +16,7 @@ ADMIN_ID = 8738813282  # O'zingizning Telegram ID ingizni kiriting
 
 # Render berganda avtomat PORT oladi, bo'lmasa 8080 ishlatadi
 PORT = int(os.environ.get("PORT", 8080))
-# Render platformasidagi veb saytingiz manzili (Render'da yaratilgach o'zgartirasiz)
+# Render platformasidagi veb saytingiz manzili
 RENDER_APP_URL = os.environ.get("RENDER_EXTERNAL_URL", "")
 
 bot = Bot(token=BOT_TOKEN)
@@ -210,10 +210,14 @@ async def download_media(call: types.CallbackQuery):
     file_id = f"file_{call.from_user.id}"
     out_tmpl = f"{file_id}.%(ext)s"
     
+    # YouTube va boshqa tarmoqlar uchun to'g'rilangan parametrlar
     ydl_opts = {
         'outtmpl': out_tmpl,
         'quiet': True,
         'no_warnings': True,
+        'geo_bypass': True,
+        'nocheckcertificate': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
 
     if is_audio:
@@ -260,7 +264,6 @@ async def download_media(call: types.CallbackQuery):
 # =========================================================
 
 async def handle_web_request(request):
-    """Saytga kurganda ko'rinadigan soxta sahifa"""
     html_content = """
     <!DOCTYPE html>
     <html>
@@ -274,7 +277,6 @@ async def handle_web_request(request):
     return web.Response(text=html_content, content_type='text/html')
 
 async def keep_alive():
-    """Server o'chib qolmasligi uchun har 10 daqiqada o'ziga o'zi so'rov yuboradi"""
     await asyncio.sleep(10)
     while True:
         if RENDER_APP_URL:
@@ -284,11 +286,10 @@ async def keep_alive():
                         logging.info(f"Ping yuborildi. Status: {resp.status}")
             except Exception as e:
                 logging.error(f"Pingda xatolik: {e}")
-        await asyncio.sleep(600)  # Har 10 daqiqada (600 soniya) bir marta
+        await asyncio.sleep(600)  # Har 10 daqiqada bir marta
 
 # --- ISHGA TUSHIRISH ---
 async def main():
-    # 1. Soxta Veb Saytni sozlash
     app = web.Application()
     app.router.add_get('/', handle_web_request)
     runner = web.AppRunner(app)
@@ -297,12 +298,8 @@ async def main():
     await site.start()
     logging.info(f"Veb-server {PORT}-portda ishga tushdi.")
 
-    # 2. Auto-ping'ni orqa fonda ishga tushirish
     asyncio.create_task(keep_alive())
-
-    # 3. Bot Polling funksiyasini ishga tushirish
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
